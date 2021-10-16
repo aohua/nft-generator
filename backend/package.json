@@ -1,0 +1,14 @@
+{
+  "name": "nftgan-server",
+  "version": "0.0.1",
+  "description": "The backend server to upload new NFT into NFT platform",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
