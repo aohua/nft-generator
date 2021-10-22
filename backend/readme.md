@@ -16,15 +16,15 @@
 
 ## Run on Heroku server
 # NOTE: Server resided on a sub folder. To push code use the following command on the root directory
-> #commit to local first
+# commit to local first
 > git subtree push --prefix backend heroku master
 > heroku ps:scale web=1
 > heroku open
 
 ## DB record
 # Create
-> create table nftrecord (url text, created_on timestamp);
+> create table nftrecord (url text, name text, description text, created_on timestamp);
 # insert 1 record
-> insert into nftrecord values ('https://ipfs.io/ipfs/bafybeifkkn4ddunvmxvc6llearqx3pehz55ightxr7cc4bim62j7w6txjm/result.jpeg', NOW());
+> insert into nftrecord values ('https://ipfs.io/ipfs/bafybeifkkn4ddunvmxvc6llearqx3pehz55ightxr7cc4bim62j7w6txjm/result.jpeg', 'NFT', 'My first nft', NOW());
 # select statement
 > select * from nftrecord order by created_on desc;

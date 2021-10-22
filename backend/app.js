@@ -32,12 +32,15 @@ app.get('/', (req, res) => {
 })
 
 app.get('/init', async (req, res) => {
-    
-    const db = await pool.connect()
-    await db.query("CREATE TABLE IF NOT EXISTS nftrecord (url text, created_on timestamp)")
-    
-    res.json({'result': 'ok'})
-    db.release()
+    try {
+        const db = await pool.connect()
+        await db.query("DROP TABLE nftrecord")
+        await db.query("CREATE TABLE IF NOT EXISTS nftrecord (url text, name text, description text, created_on timestamp)")
+        res.status(200).send({'result': 'ok'})
+        db.release()
+    } catch(err) {
+        res.status(500).send({"error": err})
+    }
 })
 
 app.get('/nft', async (req, res) => {
@@ -46,25 +49,24 @@ app.get('/nft', async (req, res) => {
         const db = await pool.connect()
         const result = await db.query("SELECT * FROM nftrecord ORDER BY created_on DESC LIMIT 20")
         const results = { 'results': (result) ? result.rows : null};
-        res.json(results)
+        res.status(200).send(results)
         db.release()
     } catch(err) {
-        res.json({"status": "error", "message": err})
+        res.status(500).send({"error": err})
     }
 })
 
-app.post('/nft', upload.single('nft_file'), (req, res) => {
-    console.log(req.file)
+app.post('/nft', upload.single('nft_file'), async (req, res) => {
     fs.readFile(req.file.path, async (err, data) => {
         if(err) {
-            res.json({'status':501})
+            res.status(500).send({"error": err})
             return
         }
 
         // upload NFT
         const metadata = await client.store({
-            name: 'First image',
-            description: 'First image from NFTGan!',
+            name: req.body.name,
+            description: req.body.description,
             image: new nft_storage.File([data], req.file.originalname, { type: req.file.mimetype })
         })
 
@@ -73,15 +75,14 @@ app.post('/nft', upload.single('nft_file'), (req, res) => {
 
         // remove file
         fs.unlink(req.file.path, (err) => {
-            if(err) console.error(err)
+            console.error(err)
         }) 
 
         // save to db
         const db = await pool.connect()
-        await db.query("INSERT INTO nftrecord VALUES ($1, now())", [nft_url])
+        await db.query("INSERT INTO nftrecord VALUES ($1, $2, $3, now())", [nft_url, req.body.name, req.body.description])
+        res.status(200).send({'nft_url': nft_url})
         db.release()
-
-        res.json({'status':200, 'nft_url': nft_url})
     })
     
 })
