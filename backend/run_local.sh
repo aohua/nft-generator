@@ -1,1 +1,1 @@
-npm run dev
+heroku local web
