@@ -1,0 +1,65 @@
+/*animate the background gradient position, use vh so that start/end syncs up viewport horizontal*/
+@keyframes rainbow {
+  from {
+    background-position: -100vh 0;
+  }
+  to {
+    background-position: 100vh 0;
+  }
+}
+
+/*compatibility*/
+@-moz-keyframes rainbow {
+  from {
+    background-position: -100vh 0;
+  }
+  to {
+    background-position: 100vh 0;
+  }
+}
+@-webkit-keyframes rainbow {
+  from {
+    background-position: -100vh 0;
+  }
+  to {
+    background-position: 100vh 0;
+  }
+}
+@-ms-keyframes rainbow {
+  from {
+    background-position: -100vh 0;
+  }
+  to {
+    background-position: 100vh 0;
+  }
+}
+@-o-keyframes rainbow {
+  from {
+    background-position: -100vh 0;
+  }
+  to {
+    background-position: 100vh 0;
+  }
+}
+
+.rainbow {
+  border: double 0.3em transparent;
+  border-radius: 10px;
+  /*added a colourstop here, without the third colourstop you get a hard edge*/
+  background: linear-gradient(white, white),
+    repeating-linear-gradient(
+      to right,
+      rgb(82, 82, 209),
+      rgb(235, 50, 235),
+      rgb(82, 82, 209)
+    );
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+
+  animation-name: rainbow;
+  animation-duration: 3s;
+
+  /*set animation to continue forever, and to move at a single rate instead of easing*/
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
