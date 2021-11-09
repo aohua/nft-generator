@@ -1,79 +1,72 @@
 import { useEffect, useRef, useState } from "react";
 import CanvasDraw from "react-canvas-draw";
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import worker from "./workers/worker";
+import { createWorker } from "./workers/createWorker";
+import * as ColorizationWorker from "./workers/colorization.worker";
+import * as StyleWorker from "./workers/style.worker";
 import debounce from "./utils/debounce";
 import Logo from "./assets/logo.png";
 import styles from "./styles.module.css";
+import test from "./test-images/test.jpeg";
 import "./App.css";
 import * as tf from "@tensorflow/tfjs";
 
-let instance = worker();
-instance.expensive(1000).then((count: number) => {
-  console.log(`Ran ${count} loops`);
-});
+let colorizarionWorker = createWorker(ColorizationWorker);
+let styleWorker = createWorker(StyleWorker);
 
-const COLORIZATION_MODEL_URL = "/colorization-model/model.json";
-
-const normalize = (tensor: tf.Tensor) => {
-  return tensor.cast("float32").div(127.5).sub(1);
-};
-
-const redrawCanvas = async (canvas: HTMLCanvasElement, tensor: tf.Tensor) => {
-  tf.browser.toPixels(tensor as unknown as tf.Tensor3D, canvas);
-};
-
-const predict = (model: tf.LayersModel, tensor: tf.Tensor) => {
-  const normalizedInput = normalize(tensor)
-    .resizeBilinear([256, 256])
-    .expandDims();
-  const predicted = tf
-    .squeeze(model.predict(normalizedInput) as unknown as tf.Tensor)
-    .resizeBilinear([400, 400])
-    .abs();
-  return predicted;
+const redrawCanvas = async (
+  canvas: HTMLCanvasElement,
+  imageData: Uint8ClampedArray
+) => {
+  tf.browser.toPixels(
+    tf.tensor3d(Array.from(imageData), [400, 400, 4], "int32"),
+    canvas
+  );
 };
 
 function App() {
   let saveableCanvas: CanvasDraw | null = null;
-  const displayCanvas = useRef(null);
-  const [colorizationModel, setColorizationModel] = useState<tf.LayersModel>();
-  const [imageDataURL, setImageDataURL] = useState("");
-  useEffect(() => {
-    async function fetchModel() {
-      const model = await tf.loadLayersModel(COLORIZATION_MODEL_URL);
-      setColorizationModel(model);
-      console.log("downloaded");
-    }
-    fetchModel();
-  }, []);
-
-  useEffect(() => {
-    const input = new Image();
-    function handleOnLoad() {
-      const inputTensor = tf.browser.fromPixels(input);
-      if (colorizationModel && displayCanvas.current) {
-        const predictOutput = predict(colorizationModel, inputTensor);
-        redrawCanvas(displayCanvas.current, predictOutput);
-      }
-    }
-    input.addEventListener("load", handleOnLoad);
-    input.src = imageDataURL;
-    return () => {
-      input.removeEventListener("load", handleOnLoad);
-    };
-  }, [imageDataURL, colorizationModel]);
-
+  const colorizationCanvas = useRef(null);
+  const styleCanvas = useRef(null);
+  const [colorImageDataURL, setColorImageDataURL] = useState<string>("");
+  const [styleImageData, setStyleImageData] =
+    useState<Uint8ClampedArray | null>();
   const onDrawing = debounce(() => {
     if (saveableCanvas) {
       const dataUrl = (saveableCanvas as any).getDataURL(
         "jpg",
-        undefined,
+        false,
         "#ffffff"
       );
-      setImageDataURL(dataUrl);
+      setColorImageDataURL(dataUrl);
     }
   }, 100);
+  // init
+  useEffect(() => {
+    onDrawing();
+  }, []);
+
+  useEffect(() => {
+    const result = colorizarionWorker.predict(colorImageDataURL);
+    result.then((res) => {
+      setStyleImageData(res);
+      requestIdleCallback(() => {
+        if (colorizationCanvas && colorizationCanvas.current && res) {
+          redrawCanvas(colorizationCanvas.current, res);
+        }
+      });
+    });
+  }, [colorImageDataURL]);
+
+  // useEffect(() => {
+  //   const result = styleWorker.predict(styleImageData);
+  //   result.then((res) => {
+  //     requestIdleCallback(() => {
+  //       if (styleCanvas && styleCanvas.current && res) {
+  //         redrawCanvas(styleCanvas.current, res);
+  //       }
+  //     });
+  //   });
+  // }, [styleImageData]);
 
   const saveableCanvasRefs = document.getElementsByClassName("canvas-draw");
   if (saveableCanvasRefs.length > 0) {
@@ -101,12 +94,17 @@ function App() {
       <div>
         <h1>Draw it yourself</h1>
         <p style={{ fontSize: 20 }}>
-          Our drawing board is baeded on 2 GAN model
+          Our drawing board is baseded on 2 GAN model
         </p>
       </div>
 
       <div
-        style={{ display: "flex", justifyContent: "space-around", margin: 40 }}
+        style={{
+          display: "flex",
+          justifyContent: "space-around",
+          margin: 40,
+          flexWrap: "wrap",
+        }}
       >
         <CanvasDraw
           ref={(canvasDraw) => (saveableCanvas = canvasDraw)}
@@ -114,13 +112,23 @@ function App() {
           brushRadius={2}
           lazyRadius={1}
           hideGrid={true}
+          style={{ margin: 20 }}
+          imgSrc={test}
           className={`${styles.rainbow} canvas-draw`}
         />
         <canvas
           width="400px"
           height="400px"
+          style={{ margin: 20 }}
           className={styles.rainbow}
-          ref={displayCanvas}
+          ref={colorizationCanvas}
+        />
+        <canvas
+          width="400px"
+          height="400px"
+          style={{ margin: 20 }}
+          className={styles.rainbow}
+          ref={styleCanvas}
         />
       </div>
     </div>
