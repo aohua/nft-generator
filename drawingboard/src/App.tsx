@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import CanvasDraw from "react-canvas-draw";
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import worker from "./workers/worker";
 import debounce from "./utils/debounce";
 import Logo from "./assets/logo.png";
 import styles from "./styles.module.css";
 import "./App.css";
 import * as tf from "@tensorflow/tfjs";
+
+let instance = worker();
+instance.expensive(1000).then((count: number) => {
+  console.log(`Ran ${count} loops`);
+});
 
 const COLORIZATION_MODEL_URL = "/colorization-model/model.json";
 
