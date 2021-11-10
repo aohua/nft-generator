@@ -78,8 +78,12 @@ function App() {
         const result = styleWorker.predict(styleImageData);
         result.then((res) => {
           requestIdleCallback(() => {
-            if (styleCanvas && styleCanvas.current && res) {
+            if (styleCanvas && styleCanvas.current && res && styleImageData) {
               redrawCanvas(styleCanvas.current, res);
+              // tf.browser.toPixels(
+              //   tf.tensor3d(styleImageData, [400, 400, 3], "float32"),
+              //   styleCanvas.current
+              // );
             }
           });
         });

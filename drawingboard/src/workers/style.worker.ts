@@ -5,12 +5,7 @@ tf.serialization.registerClass(InstanceNormalization);
 const STYLE_MODEL_URL = "/style-model/model.json";
 const styleModelFromDB = "indexeddb://style-model";
 const normalize = (tensor: tf.Tensor) => {
-  return tensor
-    .cast("float32")
-    .div(tf.scalar(127.5))
-    .sub(tf.scalar(1))
-    .resizeBilinear([256, 256])
-    .expandDims();
+  return tensor.resizeBilinear([256, 256]).expandDims();
 };
 
 async function fetchStyleModel() {
@@ -29,11 +24,11 @@ async function fetchStyleModel() {
 }
 
 export const predict = async (
-  dataArray?: Uint8Array | Float32Array | Int32Array | null
+  dataArray?: Uint8Array | Float32Array | Int32Array | number[] | null
 ) => {
   const styleModel = await fetchStyleModel();
   if (dataArray) {
-    let inputTensor = tf.tensor3d(dataArray, [400, 400, 3], "int32");
+    let inputTensor = tf.tensor3d(dataArray, [400, 400, 3], "float32");
     const normalizedInput = normalize(inputTensor);
     const predicted = tf
       .squeeze(styleModel.predict(normalizedInput) as unknown as tf.Tensor)
