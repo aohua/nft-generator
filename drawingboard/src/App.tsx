@@ -11,11 +11,14 @@ import styles from "./styles.module.css";
 import test from "./test-images/test.jpeg";
 import "./App.css";
 
+let colorizarionWorker = createWorker(ColorizationWorker);
+let styleWorker = createWorker(StyleWorker);
+let sliceWorker = createWorker(SliceWorker);
+
 const redrawCanvas = async (
   canvas: HTMLCanvasElement,
   imageData: Uint8ClampedArray
 ) => {
-  let sliceWorker = createWorker(SliceWorker);
   const dataArr = await sliceWorker.toArray(imageData);
   tf.tidy(() => {
     if (dataArr) {
@@ -41,7 +44,7 @@ function App() {
       );
       setColorImageDataURL(dataUrl);
     }
-  }, 500);
+  }, 5000);
   // init
   useEffect(() => {
     onDrawing();
@@ -49,10 +52,8 @@ function App() {
 
   useEffect(() => {
     tf.tidy(() => {
-      let colorizarionWorker = createWorker(ColorizationWorker);
       const result = colorizarionWorker.predict(colorImageDataURL);
       result.then(async (res) => {
-        let sliceWorker = createWorker(SliceWorker);
         setStyleImageData(await sliceWorker.slice(res, 0, 480000));
         requestIdleCallback(() => {
           if (colorizationCanvas && colorizationCanvas.current && res) {
@@ -66,7 +67,6 @@ function App() {
   useEffect(() => {
     tf.tidy(() => {
       if (enableStyleModel) {
-        let styleWorker = createWorker(StyleWorker);
         const result = styleWorker.predict(styleImageData);
         result.then((res) => {
           requestIdleCallback(() => {
