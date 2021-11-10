@@ -44,11 +44,11 @@ function App() {
       );
       setColorImageDataURL(dataUrl);
     }
-  }, 5000);
+  }, 2000);
   // init
   useEffect(() => {
     onDrawing();
-  }, []);
+  }, [onDrawing]);
 
   useEffect(() => {
     tf.tidy(() => {
