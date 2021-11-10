@@ -72,13 +72,12 @@ export default class InstanceNormalization extends tf.layers.Layer {
   call(inputs: tf.Tensor[]) {
     // const mean = tf.mean(inputs[0], [-1], true);
     // const variance = tf.mean(tf.square(inputs[0].sub(mean)), [-1], true);
-    const { mean, variance } = tf.moments(inputs[0], [-1], true);
+    const { mean, variance } = tf.moments(inputs[0], [1, 2], true);
     const inv = tf.rsqrt(variance.add(tf.scalar(this.epsilon)));
     const normalized = inputs[0].sub(mean).mul(inv);
     const scale = this.scale?.read();
     const offset = this.offset?.read();
     if (scale && offset) {
-      console.log("calling nirmalize");
       let outputs = normalized.mul(scale).add(offset);
       return outputs;
     }

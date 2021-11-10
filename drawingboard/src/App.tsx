@@ -32,8 +32,9 @@ function App() {
   const colorizationCanvas = useRef(null);
   const styleCanvas = useRef(null);
   const [colorImageDataURL, setColorImageDataURL] = useState<string>("");
-  const [styleImageData, setStyleImageData] =
-    useState<Uint8ClampedArray | null>();
+  const [styleImageData, setStyleImageData] = useState<
+    Uint8Array | Float32Array | Int32Array | null
+  >();
   const [enableStyleModel, setEnableStyleModel] = useState(false);
   const onDrawing = debounce(() => {
     if (saveableCanvas) {
@@ -54,12 +55,19 @@ function App() {
     tf.tidy(() => {
       const result = colorizarionWorker.predict(colorImageDataURL);
       result.then(async (res) => {
-        setStyleImageData(await sliceWorker.slice(res, 0, 480000));
-        requestIdleCallback(() => {
-          if (colorizationCanvas && colorizationCanvas.current && res) {
-            redrawCanvas(colorizationCanvas.current, res);
-          }
-        });
+        if (res) {
+          const { displayData, rawData } = res;
+          setStyleImageData(rawData);
+          requestIdleCallback(() => {
+            if (
+              colorizationCanvas &&
+              colorizationCanvas.current &&
+              displayData
+            ) {
+              redrawCanvas(colorizationCanvas.current, displayData);
+            }
+          });
+        }
       });
     });
   }, [colorImageDataURL]);

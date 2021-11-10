@@ -39,7 +39,12 @@ export const predict = async (dataURL: string) => {
       .mul(tf.scalar(0.5))
       .add(tf.scalar(0.5))
       .resizeBilinear([400, 400]);
-    return await tf.browser.toPixels(predicted as unknown as tf.Tensor3D);
+    return {
+      displayData: await tf.browser.toPixels(
+        predicted as unknown as tf.Tensor3D
+      ),
+      rawData: predicted.dataSync(),
+    };
   }
   return null;
 };
