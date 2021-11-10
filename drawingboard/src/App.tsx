@@ -1,26 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import CanvasDraw from "react-canvas-draw";
 import { createWorker } from "./workers/createWorker";
+import * as tf from "@tensorflow/tfjs";
 import * as ColorizationWorker from "./workers/colorization.worker";
 import * as StyleWorker from "./workers/style.worker";
+import * as SliceWorker from "./workers/asyncSlice.worker";
 import debounce from "./utils/debounce";
 import Logo from "./assets/logo.png";
 import styles from "./styles.module.css";
 import test from "./test-images/test.jpeg";
 import "./App.css";
-import * as tf from "@tensorflow/tfjs";
-
-let colorizarionWorker = createWorker(ColorizationWorker);
-let styleWorker = createWorker(StyleWorker);
 
 const redrawCanvas = async (
   canvas: HTMLCanvasElement,
   imageData: Uint8ClampedArray
 ) => {
-  tf.browser.toPixels(
-    tf.tensor3d(Array.from(imageData), [400, 400, 4], "int32"),
-    canvas
-  );
+  let sliceWorker = createWorker(SliceWorker);
+  const dataArr = await sliceWorker.toArray(imageData);
+  tf.tidy(() => {
+    if (dataArr) {
+      tf.browser.toPixels(tf.tensor3d(dataArr, [400, 400, 4], "int32"), canvas);
+    }
+  });
 };
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
   const [colorImageDataURL, setColorImageDataURL] = useState<string>("");
   const [styleImageData, setStyleImageData] =
     useState<Uint8ClampedArray | null>();
+  const [enableStyleModel, setEnableStyleModel] = useState(false);
   const onDrawing = debounce(() => {
     if (saveableCanvas) {
       const dataUrl = (saveableCanvas as any).getDataURL(
@@ -39,34 +41,43 @@ function App() {
       );
       setColorImageDataURL(dataUrl);
     }
-  }, 100);
+  }, 500);
   // init
   useEffect(() => {
     onDrawing();
   }, []);
 
   useEffect(() => {
-    const result = colorizarionWorker.predict(colorImageDataURL);
-    result.then((res) => {
-      setStyleImageData(res);
-      requestIdleCallback(() => {
-        if (colorizationCanvas && colorizationCanvas.current && res) {
-          redrawCanvas(colorizationCanvas.current, res);
-        }
+    tf.tidy(() => {
+      let colorizarionWorker = createWorker(ColorizationWorker);
+      const result = colorizarionWorker.predict(colorImageDataURL);
+      result.then(async (res) => {
+        let sliceWorker = createWorker(SliceWorker);
+        setStyleImageData(await sliceWorker.slice(res, 0, 480000));
+        requestIdleCallback(() => {
+          if (colorizationCanvas && colorizationCanvas.current && res) {
+            redrawCanvas(colorizationCanvas.current, res);
+          }
+        });
       });
     });
   }, [colorImageDataURL]);
 
-  // useEffect(() => {
-  //   const result = styleWorker.predict(styleImageData);
-  //   result.then((res) => {
-  //     requestIdleCallback(() => {
-  //       if (styleCanvas && styleCanvas.current && res) {
-  //         redrawCanvas(styleCanvas.current, res);
-  //       }
-  //     });
-  //   });
-  // }, [styleImageData]);
+  useEffect(() => {
+    tf.tidy(() => {
+      if (enableStyleModel) {
+        let styleWorker = createWorker(StyleWorker);
+        const result = styleWorker.predict(styleImageData);
+        result.then((res) => {
+          requestIdleCallback(() => {
+            if (styleCanvas && styleCanvas.current && res) {
+              redrawCanvas(styleCanvas.current, res);
+            }
+          });
+        });
+      }
+    });
+  }, [styleImageData, enableStyleModel]);
 
   const saveableCanvasRefs = document.getElementsByClassName("canvas-draw");
   if (saveableCanvasRefs.length > 0) {
@@ -97,12 +108,56 @@ function App() {
           Our drawing board is baseded on 2 GAN model
         </p>
       </div>
-
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          paddingLeft: 16,
+          paddingRight: 16,
+        }}
+      >
+        <button
+          onClick={() => {
+            saveableCanvas?.clear();
+            onDrawing();
+          }}
+        >
+          clear
+        </button>
+        <button
+          style={{ marginLeft: 10 }}
+          onClick={() => {
+            saveableCanvas?.undo();
+            onDrawing();
+          }}
+        >
+          undo
+        </button>
+        <button
+          style={{ marginLeft: 10 }}
+          onClick={() => {
+            setEnableStyleModel(true);
+            onDrawing();
+          }}
+        >
+          enable style model
+        </button>
+        <button
+          style={{ marginLeft: 10 }}
+          onClick={() => {
+            setEnableStyleModel(false);
+            onDrawing();
+          }}
+        >
+          disable style model
+        </button>
+      </div>
       <div
         style={{
           display: "flex",
           justifyContent: "space-around",
           margin: 40,
+          marginTop: 16,
           flexWrap: "wrap",
         }}
       >

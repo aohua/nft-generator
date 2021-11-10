@@ -1,8 +1,12 @@
 import * as tf from "@tensorflow/tfjs";
+import InstanceNormalization from "../custom-layers/InstantNormalization";
+tf.serialization.registerClass(InstanceNormalization);
+
 const STYLE_MODEL_URL = "/style-model/model.json";
 const styleModelFromDB = "indexeddb://style-model";
 const normalize = (tensor: tf.Tensor) => {
   return tensor
+    .slice(2, 3)
     .cast("float32")
     .div(tf.scalar(127.5))
     .sub(tf.scalar(1))
@@ -12,7 +16,9 @@ const normalize = (tensor: tf.Tensor) => {
 
 async function fetchStyleModel() {
   try {
-    const modelFromDB = await tf.loadLayersModel(styleModelFromDB);
+    const modelFromDB = await tf.loadLayersModel(styleModelFromDB, {
+      strict: false,
+    });
     console.log("Model:loaded from DB");
     return modelFromDB;
   } catch {
@@ -26,9 +32,9 @@ async function fetchStyleModel() {
 export const predict = async (dataArray?: Uint8ClampedArray | null) => {
   const styleModel = await fetchStyleModel();
   if (dataArray) {
-    const inputTensor = tf.tensor3d(
+    let inputTensor = tf.tensor3d(
       Array.from(dataArray),
-      [256, 256, 4],
+      [400, 400, 3],
       "int32"
     );
     const normalizedInput = normalize(inputTensor);

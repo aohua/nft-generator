@@ -14,9 +14,11 @@ async function fetchColorizationModel() {
   try {
     const modelFromDB = await tf.loadLayersModel(colorizationModelFromDB);
     console.log("Model:loaded from DB");
+    (global as any).colorizationModel = modelFromDB;
     return modelFromDB;
   } catch {
     const model = await tf.loadLayersModel(COLORIZATION_MODEL_URL);
+    (global as any).colorizationModel = model;
     await model.save(colorizationModelFromDB);
     console.log("Model:downloaded");
     return model;
