@@ -94,7 +94,7 @@ function App() {
 
   useEffect(() => {
     if (enableStyleModel) {
-      setColorLoading(true);
+      setStyleLoading(true);
     }
     tf.tidy(() => {
       if (enableStyleModel) {
@@ -169,7 +169,6 @@ function App() {
           style={{ marginLeft: 10 }}
           onClick={() => {
             setEnableStyleModel(true);
-            onDrawing();
           }}
         >
           generate art piece
@@ -191,19 +190,31 @@ function App() {
           hideGrid={true}
           style={{ margin: 20 }}
           imgSrc={test}
+          canvasWidth={410}
+          canvasHeight={410}
           className={`${styles.border} canvas-draw`}
         />
         <div
           className={colorLoading ? styles.rainbow : styles.border}
-          style={{ margin: 20 }}
+          style={{ margin: 20, height: 410 }}
         >
-          <canvas width="400px" height="400px" ref={colorizationCanvas} />
+          <canvas
+            width="400px"
+            height="400px"
+            style={{ borderRadius: 10 }}
+            ref={colorizationCanvas}
+          />
         </div>
         <div
           className={styleLoading ? styles.rainbow : styles.border}
-          style={{ margin: 20 }}
+          style={{ margin: 20, height: 410 }}
         >
-          <canvas width="400px" height="400px" ref={styleCanvas} />
+          <canvas
+            width="400px"
+            height="400px"
+            style={{ borderRadius: 10 }}
+            ref={styleCanvas}
+          />
         </div>
       </div>
       <div
