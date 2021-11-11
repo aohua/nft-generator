@@ -15,6 +15,8 @@ let colorizarionWorker = createWorker(ColorizationWorker);
 let styleWorker = createWorker(StyleWorker);
 let sliceWorker = createWorker(SliceWorker);
 
+type Image = { created_on: string; url: string };
+
 const redrawCanvas = async (
   canvas: HTMLCanvasElement,
   imageData: Uint8ClampedArray
@@ -32,10 +34,13 @@ function App() {
   const colorizationCanvas = useRef(null);
   const styleCanvas = useRef(null);
   const [colorImageDataURL, setColorImageDataURL] = useState<string>("");
+  const [colorLoading, setColorLoading] = useState(false);
+  const [styleLoading, setStyleLoading] = useState(false);
   const [styleImageData, setStyleImageData] = useState<
     Uint8Array | Float32Array | Int32Array | null
   >();
   const [enableStyleModel, setEnableStyleModel] = useState(false);
+  const [images, setImages] = useState<Image[]>([]);
   const onDrawing = debounce(() => {
     if (saveableCanvas) {
       const dataUrl = (saveableCanvas as any).getDataURL(
@@ -46,12 +51,26 @@ function App() {
       setColorImageDataURL(dataUrl);
     }
   }, 2000);
+  const fetchImages = () => {
+    fetch("https://nftgan.herokuapp.com/nft")
+      .then((res) => {
+        return res.json();
+      })
+      .then((response: { results: Image[] }) => {
+        setImages(response.results);
+      });
+  };
   // init
   useEffect(() => {
     onDrawing();
-  }, [onDrawing]);
+    fetchImages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
+    if (colorImageDataURL) {
+      setColorLoading(true);
+    }
     tf.tidy(() => {
       const result = colorizarionWorker.predict(colorImageDataURL);
       result.then(async (res) => {
@@ -65,6 +84,7 @@ function App() {
               displayData
             ) {
               redrawCanvas(colorizationCanvas.current, displayData);
+              setColorLoading(false);
             }
           });
         }
@@ -73,6 +93,9 @@ function App() {
   }, [colorImageDataURL]);
 
   useEffect(() => {
+    if (enableStyleModel) {
+      setColorLoading(true);
+    }
     tf.tidy(() => {
       if (enableStyleModel) {
         const result = styleWorker.predict(styleImageData);
@@ -80,10 +103,8 @@ function App() {
           requestIdleCallback(() => {
             if (styleCanvas && styleCanvas.current && res && styleImageData) {
               redrawCanvas(styleCanvas.current, res);
-              // tf.browser.toPixels(
-              //   tf.tensor3d(styleImageData, [400, 400, 3], "float32"),
-              //   styleCanvas.current
-              // );
+              setEnableStyleModel(false);
+              setStyleLoading(false);
             }
           });
         });
@@ -97,7 +118,6 @@ function App() {
       "background"
     );
   }
-
   return (
     <div className="App">
       <div
@@ -152,24 +172,14 @@ function App() {
             onDrawing();
           }}
         >
-          enable style model
-        </button>
-        <button
-          style={{ marginLeft: 10 }}
-          onClick={() => {
-            setEnableStyleModel(false);
-            onDrawing();
-          }}
-        >
-          disable style model
+          generate art piece
         </button>
       </div>
       <div
         style={{
           display: "flex",
           justifyContent: "space-around",
-          margin: 40,
-          marginTop: 16,
+          margin: "16px 40px",
           flexWrap: "wrap",
         }}
       >
@@ -181,22 +191,60 @@ function App() {
           hideGrid={true}
           style={{ margin: 20 }}
           imgSrc={test}
-          className={`${styles.rainbow} canvas-draw`}
+          className={`${styles.border} canvas-draw`}
         />
-        <canvas
-          width="400px"
-          height="400px"
+        <div
+          className={colorLoading ? styles.rainbow : styles.border}
           style={{ margin: 20 }}
-          className={styles.rainbow}
-          ref={colorizationCanvas}
-        />
-        <canvas
-          width="400px"
-          height="400px"
+        >
+          <canvas width="400px" height="400px" ref={colorizationCanvas} />
+        </div>
+        <div
+          className={styleLoading ? styles.rainbow : styles.border}
           style={{ margin: 20 }}
-          className={styles.rainbow}
-          ref={styleCanvas}
-        />
+        >
+          <canvas width="400px" height="400px" ref={styleCanvas} />
+        </div>
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          paddingLeft: 16,
+          paddingRight: 16,
+          marginBottom: 40,
+        }}
+      >
+        <button
+          onClick={() => {
+            fetchImages();
+          }}
+        >
+          refresh drawings
+        </button>
+        <button
+          style={{ marginLeft: 10 }}
+          onClick={() => {
+            saveableCanvas?.undo();
+            onDrawing();
+          }}
+        >
+          upload NFT
+        </button>
+      </div>
+      <h2>Gallary</h2>
+      <p>Uploaded by others</p>
+      <div className={styles.gallary}>
+        {images.map((img, index) => {
+          return (
+            <img
+              key={img.url + index}
+              style={{ width: 256, height: 256, margin: 8 }}
+              src={img.url}
+              alt="NFT"
+            />
+          );
+        })}
       </div>
     </div>
   );

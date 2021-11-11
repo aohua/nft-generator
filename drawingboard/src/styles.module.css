@@ -43,6 +43,9 @@
 }
 
 .rainbow {
+  width: 400px;
+  height: 400px;
+  position: relative;
   border: double 0.3em transparent;
   border-radius: 10px;
   /*added a colourstop here, without the third colourstop you get a hard edge*/
@@ -56,10 +59,49 @@
   background-origin: border-box;
   background-clip: content-box, border-box;
 
-  /* animation-name: rainbow;
-  animation-duration: 3s; */
+  animation-name: rainbow;
+  animation-duration: 3s;
 
   /*set animation to continue forever, and to move at a single rate instead of easing*/
-  /* animation-iteration-count: infinite;
-  animation-timing-function: linear; */
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.border {
+  border: solid 0.3em rgb(175, 107, 253);
+  background: white;
+  border-radius: 10px;
+  position: relative;
+}
+
+.rainbow::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -30px;
+  margin-left: -30px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50px;
+  border: 5px solid grey;
+  border-top-color: black;
+  animation: loading 2s linear infinite;
+  z-index: 100;
+}
+
+@keyframes loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.gallary {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 16px 16px;
+  justify-content: space-evenly;
 }
