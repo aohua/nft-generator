@@ -28,11 +28,12 @@ const redrawCanvas = async (
     }
   });
 };
+const URL = "https://nftgan.herokuapp.com/nft";
 
 function App() {
   let saveableCanvas: CanvasDraw | null = null;
-  const colorizationCanvas = useRef(null);
-  const styleCanvas = useRef(null);
+  const colorizationCanvas = useRef<HTMLCanvasElement>(null);
+  const styleCanvas = useRef<HTMLCanvasElement>(null);
   const [colorImageDataURL, setColorImageDataURL] = useState<string>("");
   const [colorLoading, setColorLoading] = useState(false);
   const [styleLoading, setStyleLoading] = useState(false);
@@ -52,7 +53,7 @@ function App() {
     }
   }, 2000);
   const fetchImages = () => {
-    fetch("https://nftgan.herokuapp.com/nft")
+    fetch(URL)
       .then((res) => {
         return res.json();
       })
@@ -60,6 +61,28 @@ function App() {
         setImages(response.results);
       });
   };
+  const uploadCanvasData = (canvas: HTMLCanvasElement) => {
+    if (canvas) {
+      canvas.toBlob((blob) => {
+        const formData = new FormData();
+        if (blob) {
+          formData.append("nft_file", blob);
+          formData.append("name", "NFT-image");
+          formData.append("description", "my NFT-image");
+          fetch(URL, { method: "post", body: formData })
+            .then((response) => response.json())
+            .then((result) => {
+              fetchImages();
+              alert("image uploaded!");
+            })
+            .catch(() => {
+              alert("upload failed!");
+            });
+        }
+      });
+    }
+  };
+
   // init
   useEffect(() => {
     onDrawing();
@@ -236,11 +259,22 @@ function App() {
         <button
           style={{ marginLeft: 10 }}
           onClick={() => {
-            saveableCanvas?.undo();
-            onDrawing();
+            if (colorizationCanvas.current) {
+              uploadCanvasData(colorizationCanvas.current);
+            }
           }}
         >
-          upload NFT
+          upload NFT(color)
+        </button>
+        <button
+          style={{ marginLeft: 10 }}
+          onClick={() => {
+            if (styleCanvas.current) {
+              uploadCanvasData(styleCanvas.current);
+            }
+          }}
+        >
+          upload NFT(color and style)
         </button>
       </div>
       <h2>Gallary</h2>
