@@ -8,7 +8,8 @@ import * as SliceWorker from "./workers/asyncSlice.worker";
 import debounce from "./utils/debounce";
 import Logo from "./assets/logo.png";
 import styles from "./styles.module.css";
-import test from "./test-images/test.jpeg";
+import test from "./test-images/test.jpg";
+import train from "./test-images/train.jpg";
 import "./App.css";
 
 let colorizarionWorker = createWorker(ColorizationWorker);
@@ -42,6 +43,7 @@ function App() {
   >();
   const [enableStyleModel, setEnableStyleModel] = useState(false);
   const [images, setImages] = useState<Image[]>([]);
+  const [bg, setBg] = useState<string>("");
   const onDrawing = debounce(() => {
     if (saveableCanvas) {
       const dataUrl = (saveableCanvas as any).getDataURL(
@@ -89,6 +91,10 @@ function App() {
     fetchImages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    saveableCanvas?.clear();
+  }, [bg, saveableCanvas]);
 
   useEffect(() => {
     if (colorImageDataURL) {
@@ -141,6 +147,7 @@ function App() {
       "background"
     );
   }
+  console.log("bg", bg);
   return (
     <div className="App">
       <div
@@ -191,6 +198,22 @@ function App() {
         <button
           style={{ marginLeft: 10 }}
           onClick={() => {
+            setBg(test);
+          }}
+        >
+          test shadow
+        </button>
+        <button
+          style={{ marginLeft: 10 }}
+          onClick={() => {
+            setBg(train);
+          }}
+        >
+          train shadow
+        </button>
+        <button
+          style={{ marginLeft: 10 }}
+          onClick={() => {
             setEnableStyleModel(true);
           }}
         >
@@ -212,7 +235,7 @@ function App() {
           lazyRadius={1}
           hideGrid={true}
           style={{ margin: 20 }}
-          imgSrc={test}
+          imgSrc={bg}
           canvasWidth={410}
           canvasHeight={410}
           className={`${styles.border} canvas-draw`}
