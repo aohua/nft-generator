@@ -5,6 +5,12 @@ const app = express()
 
 const PORT = process.env.PORT || 3000;
 
+// CORS
+app.use(cors())
+// RESTful setup
+app.use(express.urlencoded())
+app.use(express.json())
+
 // file upload setup
 const fs = require('fs')
 const multer = require('multer')
@@ -24,11 +30,6 @@ const pool = new pg.Pool({
     // }
 })
 
-// CORS
-app.use(cors())
-// RESTful setup
-app.use(express.urlencoded())
-app.use(express.json())
 
 
 app.get('/', (req, res) => {
