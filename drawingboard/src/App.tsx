@@ -5,7 +5,7 @@ import * as tf from "@tensorflow/tfjs";
 import * as ColorizationWorker from "./workers/colorization.worker";
 import * as StyleWorker from "./workers/style.worker";
 import * as SliceWorker from "./workers/asyncSlice.worker";
-import debounce from "./utils/debounce";
+import { useDebounce } from "./utils/debounce";
 import Logo from "./assets/logo.png";
 import styles from "./styles.module.css";
 import test from "./test-images/test.jpg";
@@ -35,7 +35,6 @@ function App() {
   let saveableCanvas: CanvasDraw | null = null;
   const colorizationCanvas = useRef<HTMLCanvasElement>(null);
   const styleCanvas = useRef<HTMLCanvasElement>(null);
-  const [colorImageDataURL, setColorImageDataURL] = useState<string>("");
   const [colorLoading, setColorLoading] = useState(false);
   const [styleLoading, setStyleLoading] = useState(false);
   const [styleImageData, setStyleImageData] = useState<
@@ -44,16 +43,7 @@ function App() {
   const [enableStyleModel, setEnableStyleModel] = useState(false);
   const [images, setImages] = useState<Image[]>([]);
   const [bg, setBg] = useState<string>("");
-  const onDrawing = debounce(() => {
-    if (saveableCanvas) {
-      const dataUrl = (saveableCanvas as any).getDataURL(
-        "jpg",
-        false,
-        "#ffffff"
-      );
-      setColorImageDataURL(dataUrl);
-    }
-  }, 2000);
+
   const fetchImages = () => {
     fetch(URL)
       .then((res) => {
@@ -63,6 +53,10 @@ function App() {
         setImages(response.results);
       });
   };
+  const getDataURL = () =>
+    (saveableCanvas as any).getDataURL("jpg", false, "#ffffff");
+  const [dataUrl, setDataUrl] = useState("");
+  const colorImageDataURL = useDebounce(dataUrl, 2000);
   const uploadCanvasData = (canvas: HTMLCanvasElement) => {
     if (canvas) {
       canvas.toBlob((blob) => {
@@ -87,7 +81,7 @@ function App() {
 
   // init
   useEffect(() => {
-    onDrawing();
+    setDataUrl(getDataURL());
     fetchImages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -181,7 +175,7 @@ function App() {
         <button
           onClick={() => {
             saveableCanvas?.clear();
-            onDrawing();
+            setDataUrl(getDataURL());
           }}
         >
           clear
@@ -190,7 +184,7 @@ function App() {
           style={{ marginLeft: 10 }}
           onClick={() => {
             saveableCanvas?.undo();
-            onDrawing();
+            setDataUrl(getDataURL());
           }}
         >
           undo
@@ -230,7 +224,7 @@ function App() {
       >
         <CanvasDraw
           ref={(canvasDraw) => (saveableCanvas = canvasDraw)}
-          onChange={onDrawing}
+          onChange={() => setDataUrl(getDataURL())}
           brushRadius={2}
           lazyRadius={1}
           hideGrid={true}

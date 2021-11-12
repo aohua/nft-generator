@@ -2,7 +2,7 @@ import * as tf from "@tensorflow/tfjs";
 import InstanceNormalization from "../custom-layers/InstantNormalization";
 tf.serialization.registerClass(InstanceNormalization);
 
-const STYLE_MODEL_URL = "/style-model/model.json";
+const STYLE_MODEL_URL = "/style-van-model/model.json";
 const styleModelFromDB = "indexeddb://style-model";
 const normalize = (tensor: tf.Tensor) => {
   return tensor.resizeBilinear([256, 256]).expandDims();
