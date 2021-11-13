@@ -159,9 +159,34 @@ function App() {
       </div>
 
       <div>
-        <h1>Draw it yourself</h1>
+        <h1>NFTGan - Draw Masterful Art Pieces</h1>
         <p style={{ fontSize: 20 }}>
-          Our drawing board is baseded on 2 GAN model
+          This application shows the potential application of using{" "}
+          <b>Generative Adversarial Network (GAN)</b> to generate artwork. We
+          used both <b>Pix2Pix</b>
+          and <b>CycleGAN</b> for this demo
+        </p>
+
+        <a
+          className="github-button"
+          href="https://github.com/aohua/nft-generator"
+          data-color-scheme="no-preference: light; light: light; dark: dark;"
+          data-icon="octicon-star"
+          aria-label="Star aohua/nft-generator on GitHub"
+        >
+          Star
+        </a>
+        <span> </span>
+        <a
+          className="github-button"
+          href="https://github.com/aohua"
+          data-color-scheme="no-preference: light; light: light; dark: dark;"
+          aria-label="Follow @aohua on GitHub"
+        >
+          Follow us
+        </a>
+        <p>
+          Created by: <b>Aohua</b> and <b>Jeremy</b>
         </p>
       </div>
       <div
