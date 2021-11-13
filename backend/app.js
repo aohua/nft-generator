@@ -25,9 +25,6 @@ const client = new nft_storage.NFTStorage({ token: apiKey })
 const pg = require('pg')
 const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
-    // ssl: {
-    //     rejectUnauthorized: false
-    // }
 })
 
 
@@ -52,7 +49,7 @@ app.get('/nft', async (req, res) => {
 
     try {
         const db = await pool.connect()
-        const result = await db.query("SELECT * FROM nftrecord ORDER BY created_on DESC LIMIT 20")
+        const result = await db.query("SELECT * FROM nftrecord ORDER BY created_on DESC LIMIT 100")
         const results = { 'results': (result) ? result.rows : null};
         res.status(200).send(results)
         db.release()
