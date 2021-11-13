@@ -161,10 +161,9 @@ function App() {
       <div>
         <h1>NFTGan - Draw Masterful Art Pieces</h1>
         <p style={{ fontSize: 20 }}>
-          This application shows the potential application of using{" "}
+          This application shows the potential of using{" "}
           <b>Generative Adversarial Network (GAN)</b> to generate artwork. We
-          used both <b>Pix2Pix</b>
-          and <b>CycleGAN</b> for this demo
+          used both <b>Pix2Pix</b> and <b>CycleGAN</b> for this demo
         </p>
 
         <a
@@ -186,7 +185,7 @@ function App() {
           Follow us
         </a>
         <p>
-          Created by: <b>Aohua</b> and <b>Jeremy</b>
+          Created by: <b>Aohua</b> and <b>Jeremy</b> (alphabetical order)
         </p>
       </div>
       <div
